@@ -1,0 +1,5 @@
+# Ignore every subfolder
+*/
+
+# Ignore config file
+config.php

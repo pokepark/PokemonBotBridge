@@ -25,8 +25,41 @@ $filename = '';
 $altfilename = '';
 $foldertype = '';
 
+
+// Callback query.
+if (isset($update['callback_query'])) {
+    // Set foldertype
+    $foldertype = 'mods';
+
+    // Init empty data array.
+    $data = array();
+
+    // Callback data found.
+    if ($update['callback_query']['data']) {
+        // Split bot folder name away from actual data.
+        $botnameData = explode(':', $update['callback_query']['data'], 2);
+        $botname = $botnameData[0];
+        $thedata = $botnameData[1];
+
+        // Split callback data and assign to data array.
+        $splitData = explode(':', $thedata);
+        $filename = $splitData[1];
+    }
+        
+    // Check if filename exists
+    if(is_file(__DIR__ . '/' . $botname . '/' . $foldertype . '/' . $filename . '.php')) {
+        include_once(__DIR__ . '/' . $botname . '/index.php');
+        exit();
+    }
+
+// Location.
+} else if (isset($update['message']['location'])) {
+    // Forward request to location bot and exit.
+    include_once(__DIR__ . '/' . LOCATION_BOT . '/index.php');
+    exit();
+
 // Message.
-if (isset($update['message']) && $update['message']['chat']['type'] == 'private') {
+} else if (isset($update['message']) && $update['message']['chat']['type'] == 'private') {
     // Set foldertype to commands
     $foldertype = 'commands';
 
@@ -55,26 +88,23 @@ if (isset($update['message']) && $update['message']['chat']['type'] == 'private'
         }
     }
 
-// Callback query.
-} else if (isset($update['callback_query'])) {
-    // Set foldertype
-    $foldertype = 'mods';
-
-    // Init empty data array.
-    $data = array();
-
-    // Callback data found.
-    if ($update['callback_query']['data']) {
-        // Split callback data and assign to data array.
-        $splitData = explode(':', $update['callback_query']['data']);
-        $filename = $splitData[1];
+// Inline query.
+} else if (isset($update['inline_query'])) {
+    if (substr_count($update['inline_query']['query'], ':') == 1) {
+        // Split bot folder name away from actual data.
+        $botnameData = explode(':', $update['inline_query']['query'], 1);
+        $botname = $botnameData[0];
+        $thedata = $botnameData[1];
+    } else {
+        $botname = DEFAULT_BOT;
+        $thedata = '';
     }
-
-// Location.
-} else if (isset($update['message']['location'])) {
-    // Forward request to location bot and exit.
-    include_once(__DIR__ . '/' . LOCATION_BOT . '/index.php');
-    exit();
+        
+    // Check if filename exists
+    if(is_file(__DIR__ . '/' . $botname . '/index.php')) {
+        include_once(__DIR__ . '/' . $botname . '/index.php');
+        exit();
+    }
 }
 
 // Check files if filenames and foldertype are set

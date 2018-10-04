@@ -13,6 +13,7 @@ $update = json_decode($content, true);
 
 // Get bot directories
 $botdirs = str_replace(__DIR__ . '/','',glob(__DIR__ . '/*', GLOB_ONLYDIR));
+$botdirs_count = count($botdirs);
 
 // Add DEFAULT_BOT dir as first entry
 array_unshift($botdirs, DEFAULT_BOT);
@@ -24,7 +25,6 @@ $botdirs = array_unique($botdirs);
 $filename = '';
 $altfilename = '';
 $foldertype = '';
-
 
 // Callback query.
 if (isset($update['callback_query'])) {
@@ -108,7 +108,10 @@ if (isset($update['callback_query'])) {
 }
 
 // Check files if filenames and foldertype are set
-if (!empty($filename) && !empty($foldertype)) {
+// Compare count of subfolders, as we can only search for filename if we have 2 folders or less
+// First the default bot folder and then the other bot folder will be checked this way
+// If we have more than 2 folders, searching for filename won't work and therefore be skipped
+if ($botdirs_count <= 2 && !empty($filename) && !empty($foldertype)) {
     // Check if file exists inside any of the botdirs
     foreach ($botdirs as $key => $dir) {
         // Check if filename exists

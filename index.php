@@ -90,11 +90,16 @@ if (isset($update['callback_query'])) {
 
 // Inline query.
 } else if (isset($update['inline_query'])) {
+    $count = substr_count($update['inline_query']['query'], ':');
     if (substr_count($update['inline_query']['query'], ':') == 1) {
         // Split bot folder name away from actual data.
-        $botnameData = explode(':', $update['inline_query']['query'], 1);
+        $botnameData = explode(':', $update['inline_query']['query'], 2);
         $botname = $botnameData[0];
-        $thedata = $botnameData[1];
+        $thedata = '';
+        // Do we have any data yet?
+        if(strlen(explode(':', $update['inline_query']['query'])[1]) != 0) {
+            $thedata = $botnameData[1];
+        }
     } else {
         $botname = DEFAULT_BOT;
         $thedata = '';

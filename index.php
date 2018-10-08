@@ -13,6 +13,7 @@ $update = json_decode($content, true);
 
 // Get bot directories
 $botdirs = str_replace(__DIR__ . '/','',glob(__DIR__ . '/*', GLOB_ONLYDIR));
+$botdirs_count = count($botdirs);
 
 // Add DEFAULT_BOT dir as first entry
 array_unshift($botdirs, DEFAULT_BOT);
@@ -25,8 +26,40 @@ $filename = '';
 $altfilename = '';
 $foldertype = '';
 
+// Callback query.
+if (isset($update['callback_query'])) {
+    // Set foldertype
+    $foldertype = 'mods';
+
+    // Init empty data array.
+    $data = []; 
+
+    // Callback data found.
+    if ($update['callback_query']['data']) {
+        // Split bot folder name away from actual data.
+        $botnameData = explode(':', $update['callback_query']['data'], 2);
+        $botname = $botnameData[0];
+        $thedata = $botnameData[1];
+
+        // Split callback data and assign to data array.
+        $splitData = explode(':', $thedata);
+        $filename = $splitData[1];
+    }
+        
+    // Check if filename exists
+    if(is_file(__DIR__ . '/' . $botname . '/' . $foldertype . '/' . $filename . '.php')) {
+        include_once(__DIR__ . '/' . $botname . '/index.php');
+        exit();
+    }
+
+// Location.
+} else if (isset($update['message']['location'])) {
+    // Forward request to location bot and exit.
+    include_once(__DIR__ . '/' . LOCATION_BOT . '/index.php');
+    exit();
+
 // Message.
-if (isset($update['message']) && $update['message']['chat']['type'] == 'private') {
+} else if (isset($update['message']) && $update['message']['chat']['type'] == 'private') {
     // Set foldertype to commands
     $foldertype = 'commands';
 
@@ -55,30 +88,85 @@ if (isset($update['message']) && $update['message']['chat']['type'] == 'private'
         }
     }
 
-// Callback query.
-} else if (isset($update['callback_query'])) {
-    // Set foldertype
-    $foldertype = 'mods';
-
-    // Init empty data array.
-    $data = array();
-
-    // Callback data found.
-    if ($update['callback_query']['data']) {
-        // Split callback data and assign to data array.
-        $splitData = explode(':', $update['callback_query']['data']);
-        $filename = $splitData[1];
+// Inline query.
+} else if (isset($update['inline_query'])) {
+    $count = substr_count($update['inline_query']['query'], ':');
+    if (substr_count($update['inline_query']['query'], ':') == 1) {
+        // Split bot folder name away from actual data.
+        $botnameData = explode(':', $update['inline_query']['query'], 2);
+        $botname = $botnameData[0];
+        $thedata = '';
+        // Do we have any data yet?
+        if(strlen(explode(':', $update['inline_query']['query'])[1]) != 0) {
+            $thedata = $botnameData[1];
+        }
+    } else {
+        $botname = DEFAULT_BOT;
+        $thedata = '';
+    }
+        
+    // Check if filename exists
+    if(is_file(__DIR__ . '/' . $botname . '/index.php')) {
+        include_once(__DIR__ . '/' . $botname . '/index.php');
+        exit();
     }
 
-// Location.
-} else if (isset($update['message']['location'])) {
-    // Forward request to location bot and exit.
-    include_once(__DIR__ . '/' . LOCATION_BOT . '/index.php');
-    exit();
+// Channel post / Supergroup message.
+} else if ((isset($update['channel_post']) && $update['channel_post']['chat']['type'] == "channel") || (isset($update['message']) && $update['message']['chat']['type'] == "supergroup")) {
+    // Get Bot_ID 
+    $bot_id = '0';
+    if(isset($update['channel_post'])) {
+        $id_pos = strrpos($update['channel_post']['text'], '-ID = ');
+        $bot_id = ($id_pos === false) ? ('0') : (substr($update['channel_post']['text'], ($id_pos - 1), 1));
+        $bot_id = strtoupper($bot_id);
+    } else if ($update['message']['chat']['type'] == "supergroup") {
+        $id_pos = strrpos($update['message']['text'], '-ID = ');
+        $bot_id = ($id_pos === false) ? ('0') : (substr($update['message']['text'], ($id_pos - 1), 1));
+        $bot_id = strtoupper($bot_id);
+    }
+
+    // Make sure bot_id was received.
+    if($bot_id != '0') {
+        // Search BOT_ID in config files.
+        $search = 'BOT_ID';
+        // Go thru every bots' config.
+        foreach ($botdirs as $key => $dir) {
+            // Make sure config file exists.
+            if(is_file(__DIR__ . '/' . $dir . '/config.php')) {
+                // Read config file.
+                $lines = file(__DIR__ . '/' . $dir . '/config.php');
+                foreach($lines as $line) {
+                    // Check if the line contains the search term.
+                    if(strpos($line, $search) !== false) { 
+                        // Get BOT_ID via string manipulation.
+                        // Example: $line = define('BOT_ID','A');
+                        // explode(',', $line, 2)[1]  will split at , into 2 pieces to get you: 'A');
+                        // explode("'", INNER-EXPLODE)[1]  will split at ' and so you get the ID: A
+                        // strtoupper will make sure we compare uppercase to uppercase
+                        // substr will get only the first character as it's in the bots handled too.
+                        $config_bot_id = explode("'", explode(',', $line, 2)[1])[1];
+                        $config_bot_id = substr(strtoupper($config_bot_id), 0, 1);
+
+                        // Compare bot_id and config_bot_id.
+                        if($bot_id === $config_bot_id) {
+                            // Check if filename exists
+                            if(is_file(__DIR__ . '/' . $dir . '/index.php')) {
+                                include_once(__DIR__ . '/' . $dir . '/index.php');
+                                exit();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Check files if filenames and foldertype are set
-if (!empty($filename) && !empty($foldertype)) {
+// Compare count of subfolders, as we can only search for filename if we have 2 folders or less
+// First the default bot folder and then the other bot folder will be checked this way
+// If we have more than 2 folders, searching for filename won't work and therefore be skipped
+if ($botdirs_count <= 2 && !empty($filename) && !empty($foldertype)) {
     // Check if file exists inside any of the botdirs
     foreach ($botdirs as $key => $dir) {
         // Check if filename exists

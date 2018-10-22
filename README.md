@@ -90,6 +90,7 @@ To create a raid in the 5th Avenue area, we simply can use the `/start` command 
 To create a raid in the Wallstreet district, the name of the subfolder from the bot `wall` plus the commandname `start` simply need to be combined to `/wallstart` to start the raid creation. Same for the Jersey City area - folder name plus command name: `/jerseystart`
 
 For every other command the same scheme applies: bot directory name plus command name
+
 To use the delete command for the Central Park area bot, you easily send `/cparkdelete` to the bot.
 
 That's it - enjoy the advantages of the PokemonBotBridge!

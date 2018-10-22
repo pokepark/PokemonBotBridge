@@ -91,6 +91,8 @@ To create a raid in the Wallstreet district, the name of the subfolder from the 
 
 For every other command the same scheme applies: bot directory name plus command name
 
-To use the delete command for the Central Park area bot, you easily send `/cparkdelete` to the bot.
+For example to use the delete command for the Central Park area bot, you easily send `/cparkdelete` to the bot.
+
+Callback queries are altered automatically once the `BRIDGE_MODE` is set to `true` in each bots config file, so you don't need to care about that. All you need to know is the directory name of the bot and the command you'd like to sent to the bot.
 
 That's it - enjoy the advantages of the PokemonBotBridge!

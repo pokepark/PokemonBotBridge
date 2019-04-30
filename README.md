@@ -18,6 +18,8 @@ Set `DEFAULT_BOT` to the bot which shall receive the command or data when no oth
 
 Set `LOCATION_BOT` to the bot which shall receive messages with a shared location send to the bot / bot bridge.
 
+Set `EXCLUDE_DIRS` to the directories which should be exluded from the bridge logic. You can add multiple folder separated by comma. Example: `define('EXCLUDE_DIRS', 'core,backup');`
+
 # Bot token
 
 Start chat with https://t.me/BotFather and create one bot token.
@@ -30,7 +32,7 @@ Bot Settings:
 
 # Bot installation
 
-For each bot under the bridge create a subfolder and set up that bot in the subfolder as their README says, except for the steps with the Telegram BotFather, the `CONFIG_HASH`'s SHA512 value and the webhook! Skip those part when setting up the bots itself!
+For each bot under the bridge create a subfolder and set up that bot in the subfolder as their README says, except for the steps with the Telegram BotFather, the `APIKEY_HASH`'s SHA512 value and the webhook! Skip those part when setting up the bots itself!
 
 Due to technical limitations and also for usability reasons please keep the names of the subfolders for each bot as short as possible. If the foldername exceeds a length of 8 characters, a hint will be logged in the logfile of the respective bot and no response will be given until the length issue is fixed!
 
@@ -67,7 +69,7 @@ All the bots in the subfolder share the same webhook which will be set in the ne
 
 Use https://www.miniwebtool.com/sha512-hash-generator/ to create the hashed value of the bot token (preferably lowercase).
 
-Edit then each bots config file and set the `CONFIG_HASH` to the hashed bot token and `BRIDGE_MODE` to `true` - that's it!
+Edit then each bots config file and set the `APIKEY_HASH` to the hashed bot token and `BRIDGE_MODE` to `true` - that's it!
 
 # Webhook
 

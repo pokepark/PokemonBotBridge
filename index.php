@@ -18,6 +18,17 @@ $botdirs_count = count($botdirs);
 // Add DEFAULT_BOT dir as first entry
 array_unshift($botdirs, DEFAULT_BOT);
 
+// Remove EXCLUDE_DIRS from bot dirs
+if(defined('EXCLUDE_DIRS') && !empty(EXCLUDE_DIRS)) {
+    $excludedirs = explode(',', EXCLUDE_DIRS);
+    // Remove dir
+    foreach($excludedirs as $dir) {
+        if(($key = array_search($dir, $botdirs)) !== false) {
+            unset($botdirs[$key]);
+        }
+    }
+}
+
 // Remove second DEFAULT_BOT dir entry
 $botdirs = array_unique($botdirs);
 

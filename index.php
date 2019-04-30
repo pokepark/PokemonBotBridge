@@ -13,7 +13,6 @@ $update = json_decode($content, true);
 
 // Get bot directories
 $botdirs = str_replace(__DIR__ . '/','',glob(__DIR__ . '/*', GLOB_ONLYDIR));
-$botdirs_count = count($botdirs);
 
 // Add DEFAULT_BOT dir as first entry
 array_unshift($botdirs, DEFAULT_BOT);
@@ -22,8 +21,8 @@ array_unshift($botdirs, DEFAULT_BOT);
 if(defined('EXCLUDE_DIRS') && !empty(EXCLUDE_DIRS)) {
     $excludedirs = explode(',', EXCLUDE_DIRS);
     // Remove dir
-    foreach($excludedirs as $dir) {
-        if(($key = array_search($dir, $botdirs)) !== false) {
+    foreach($excludedirs as $exdir) {
+        if(($key = array_search($exdir, $botdirs)) !== false) {
             unset($botdirs[$key]);
         }
     }
@@ -31,6 +30,12 @@ if(defined('EXCLUDE_DIRS') && !empty(EXCLUDE_DIRS)) {
 
 // Remove second DEFAULT_BOT dir entry
 $botdirs = array_unique($botdirs);
+
+// Reset keys of bot dirs
+$botdirs = array_values($botdirs);
+
+// Count bot dirs
+$botdirs_count = count($botdirs);
 
 // Initialize filenames and foldertype
 $filename = '';
@@ -82,7 +87,7 @@ if (isset($update['callback_query'])) {
         // Check if name of a botdir is inside command
         foreach ($botdirs as $key => $dir) {
             // Filename starting with name of botdir?
-            if (substr($filename, 0, strlen($dir)) == $dir) {
+            if (substr($filename, 0, strlen($dir)) === $dir) {
                 // Set alternative filename, substract botdir name from command
                 $altfilename = substr($filename, strlen($dir));
                 // Make sure alternative filename exists inside and forward then

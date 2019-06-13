@@ -94,7 +94,11 @@ if (isset($update['callback_query'])) {
                 if (is_file(__DIR__ . '/' . $dir . '/' . $foldertype . '/' . $altfilename . '.php')) {
                     include_once(__DIR__ . '/' . $dir . '/index.php');
                     exit();
-                }
+                // Check if a core command was requested and forward then
+                } else if (is_file(__DIR__ . '/' . $dir . '/core/' . $foldertype . '/' . $altfilename . '.php')) {
+                    include_once(__DIR__ . '/' . $dir . '/index.php');
+                    exit();
+                } 
             }
         }
         // If filename is equal to a botdir, forward to that bot

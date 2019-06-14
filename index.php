@@ -132,10 +132,10 @@ if (isset($update['callback_query'])) {
     }
 
 // Channel post / Supergroup message.
-} else if ((isset($update['channel_post']) && $update['channel_post']['chat']['type'] == "channel") || (isset($update['message']) && $update['message']['chat']['type'] == "supergroup")) {
+} else if ((isset($update['channel_post']['text']) && $update['channel_post']['chat']['type'] == "channel") || (isset($update['message']['text']) && $update['message']['chat']['type'] == "supergroup")) {
     // Get Bot_ID 
     $bot_id = '0';
-    if(isset($update['channel_post'])) {
+    if(isset($update['channel_post']['text'])) {
         $id_pos = strrpos($update['channel_post']['text'], '-ID = ');
         $bot_id = ($id_pos === false) ? ('0') : (substr($update['channel_post']['text'], ($id_pos - 1), 1));
         $bot_id = strtoupper($bot_id);

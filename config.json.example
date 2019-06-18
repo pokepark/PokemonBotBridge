@@ -1,0 +1,11 @@
+{
+  "__DEFAULT_BOT__":"Forward messages to that bot if no other bot fits",
+  "__LOCATION_BOT__":"Forward messages with a location to that bot",
+  "__EXCLUDE_DIRS__":"Exclude these dirs and do not forward messages to them",
+  "__NOTE__":"The values 'raid' and 'quest' must be equal to the directory names!",
+  "__NOTE__":"If your bot directory names are different, change them accordingly!",
+
+  "DEFAULT_BOT":"raid",
+  "LOCATION_BOT":"quest",
+  "EXCLUDE_DIRS":""
+}

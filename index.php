@@ -1,6 +1,33 @@
 <?php 
 // Config.
-require_once(__DIR__ . '/config.php');
+$cfile = __DIR__ . '/config.json';
+if(is_file($cfile)) {
+    $str = file_get_contents($cfile);
+    $config = json_decode($str, true);
+    // Make sure JSON is valid.
+    if(!(is_string($str) && is_array(json_decode($str, true)) && (json_last_error() === JSON_ERROR_NONE))) {
+        error_log('Invalid JSON: ' . $cfile);
+    }
+
+    // Check file permissions.
+    if((fileperms($cfile) & 0777) !== 0600) {
+        error_log('Insecure file permissions: ' . $cfile . ' (0' . decoct(fileperms($cfile) & 0777) . ') — recommended file permissions: 0600');
+    }
+
+    // Define constants.
+    foreach($config as $key => $val) {
+        // Skip comments starting and ending with 2 underscores, e.g. __SQL-CONFIG__
+        if(substr($key, 0, 2) == '__' && substr($key, -2)) continue;
+
+        // Define constants.
+        defined($key) or define($key, $val);
+    }
+
+// Config not found, exit!
+} else {
+    error_log('Config file missing: ' . $cfile);
+    exit();
+}
 
 // Tell telegram 'OK'
 http_response_code(200);

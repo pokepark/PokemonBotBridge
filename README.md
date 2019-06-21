@@ -12,13 +12,13 @@ The PokemonBotBridge builds a passive bridge between several PokemonRaidBots and
 
 # Config
 
-Copy config.php.example to config.php and edit (values explained further).
+Copy config.php.json to config.json and edit (values explained further).
 
 Set `DEFAULT_BOT` to the bot which shall receive the command or data when no other suitable bot was specified in the request.
 
 Set `LOCATION_BOT` to the bot which shall receive messages with a shared location send to the bot / bot bridge.
 
-Set `EXCLUDE_DIRS` to the directories which should be exluded from the bridge logic. You can add multiple folder separated by comma. Example: `define('EXCLUDE_DIRS', 'core,backup');`
+Set `EXCLUDE_DIRS` to the directories which should be exluded from the bridge logic. You can add multiple folder separated by comma. Example: `"EXCLUDE_DIRS":"core,backup"`
 
 # Bot token
 

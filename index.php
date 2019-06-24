@@ -103,6 +103,26 @@ if (isset($update['callback_query'])) {
 
 // Message.
 } else if (isset($update['message']) && $update['message']['chat']['type'] == 'private') {
+    // Portal message?
+    if(isset($update['message']['entities']['1']['type']) && $update['message']['entities']['1']['type'] == 'text_link' && strpos($update['message']['entities']['1']['url'], 'https://intel.ingress.com/intel?ll=') === 0) {
+        // Ingressportalbot
+        $icon = iconv('UCS-4LE', 'UTF-8', pack('V', 0x1F4DC));
+        if(strpos($update['message']['text'], $icon . 'Portal:') === 0) {
+            // Make sure the bot exits and forward then
+            if(is_file(__DIR__ . '/' . INGRESSPORTALBOT . '/index.php')) {
+                include_once(__DIR__ . '/' . INGRESSPORTALBOT . '/index.php');
+                exit();
+            }
+        // PortalMapBot
+        } else if(substr_compare(strtok($update['message']['text'], PHP_EOL), '(Intel)', -strlen('(Intel)')) === 0) {
+            // Make sure the bot exits and forward then
+            if(is_file(__DIR__ . '/' . PORTALMAPBOT . '/index.php')) {
+                include_once(__DIR__ . '/' . PORTALMAPBOT . '/index.php');
+                exit();
+            }
+        }
+    }
+
     // Set foldertype to commands
     $foldertype = 'commands';
 

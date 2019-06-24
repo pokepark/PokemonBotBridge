@@ -110,7 +110,6 @@ if (isset($update['callback_query'])) {
     if (substr($update['message']['text'], 0, 1) == '/') {
         // Get command name
         $filename = strtolower(str_replace('/', '', explode(' ', $update['message']['text'])[0]));
-
         // Check if name of a botdir is inside command
         foreach ($botdirs as $key => $dir) {
             // Filename starting with name of botdir?
@@ -175,25 +174,19 @@ if (isset($update['callback_query'])) {
     // Make sure bot_id was received.
     if($bot_id != '0') {
         // Search BOT_ID in config files.
-        $search = 'BOT_ID';
+        //$search = 'BOT_ID';
         // Go thru every bots' config.
         foreach ($botdirs as $key => $dir) {
             // Make sure config file exists.
-            if(is_file(__DIR__ . '/' . $dir . '/config.php')) {
-                // Read config file.
-                $lines = file(__DIR__ . '/' . $dir . '/config.php');
-                foreach($lines as $line) {
-                    // Check if the line contains the search term.
-                    if(strpos($line, $search) !== false) { 
-                        // Get BOT_ID via string manipulation.
-                        // Example: $line = define('BOT_ID','A');
-                        // explode(',', $line, 2)[1]  will split at , into 2 pieces to get you: 'A');
-                        // explode("'", INNER-EXPLODE)[1]  will split at ' and so you get the ID: A
-                        // strtoupper will make sure we compare uppercase to uppercase
-                        // substr will get only the first character as it's in the bots handled too.
-                        $config_bot_id = explode("'", explode(',', $line, 2)[1])[1];
-                        $config_bot_id = substr(strtoupper($config_bot_id), 0, 1);
-
+            if(is_file(__DIR__ . '/' . $dir . '/config/config.json')) {
+                // Read config json.
+                $str = file_get_contents(__DIR__ . '/' . $dir . '/config/config.json');
+                $config = json_decode($str, true);
+                // Get bot id.
+                // strtoupper will make sure we compare uppercase to uppercase
+                // substr will get only the first character as it's in the bots handled too.
+                $config_bot_id = $config['BOT_ID'];
+                $config_bot_id = substr(strtoupper($config_bot_id), 0, 1);
                         // Compare bot_id and config_bot_id.
                         if($bot_id === $config_bot_id) {
                             // Check if filename exists
@@ -202,8 +195,8 @@ if (isset($update['callback_query'])) {
                                 exit();
                             }
                         }
-                    }
-                }
+                    //}
+                //}
             }
         }
     }

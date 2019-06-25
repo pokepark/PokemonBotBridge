@@ -12,13 +12,17 @@ The PokemonBotBridge builds a passive bridge between several PokemonRaidBots and
 
 # Config
 
-Copy config.php.json to config.json and edit (values explained further).
+Copy config.json.example to config.json and edit (values explained further).
 
 Set `DEFAULT_BOT` to the bot which shall receive the command or data when no other suitable bot was specified in the request.
 
 Set `LOCATION_BOT` to the bot which shall receive messages with a shared location send to the bot / bot bridge.
 
 Set `EXCLUDE_DIRS` to the directories which should be exluded from the bridge logic. You can add multiple folder separated by comma. Example: `"EXCLUDE_DIRS":"core,backup"`
+
+Set `PORTALMAPBOT` to the bot which shall receive messages from @PortalMapBot. Example: `"PORTALMAPBOT":"raid"`
+
+Set `INGRESSPORTALBOT` to the bot which shall receive messages from @Ingressportalbot. Example: `"Ingressportalbot":"quest"`
 
 # Bot token
 

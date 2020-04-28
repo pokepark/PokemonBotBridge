@@ -1,6 +1,33 @@
 <?php 
 // Config.
-require_once(__DIR__ . '/config.php');
+$cfile = __DIR__ . '/config.json';
+if(is_file($cfile)) {
+    $str = file_get_contents($cfile);
+    $config = json_decode($str, true);
+    // Make sure JSON is valid.
+    if(!(is_string($str) && is_array(json_decode($str, true)) && (json_last_error() === JSON_ERROR_NONE))) {
+        error_log('Invalid JSON: ' . $cfile);
+    }
+
+    // Check file permissions.
+    if((fileperms($cfile) & 0777) !== 0600) {
+        error_log('Insecure file permissions: ' . $cfile . ' (0' . decoct(fileperms($cfile) & 0777) . ') - recommended file permissions: 0600');
+    }
+
+    // Define constants.
+    foreach($config as $key => $val) {
+        // Skip comments starting and ending with 2 underscores, e.g. __SQL-CONFIG__
+        if(substr($key, 0, 2) == '__' && substr($key, -2)) continue;
+
+        // Define constants.
+        defined($key) or define($key, $val);
+    }
+
+// Config not found, exit!
+} else {
+    error_log('Config file missing: ' . $cfile);
+    exit();
+}
 
 // Tell telegram 'OK'
 http_response_code(200);
@@ -13,13 +40,29 @@ $update = json_decode($content, true);
 
 // Get bot directories
 $botdirs = str_replace(__DIR__ . '/','',glob(__DIR__ . '/*', GLOB_ONLYDIR));
-$botdirs_count = count($botdirs);
 
 // Add DEFAULT_BOT dir as first entry
 array_unshift($botdirs, DEFAULT_BOT);
 
+// Remove EXCLUDE_DIRS from bot dirs
+if(defined('EXCLUDE_DIRS') && !empty(EXCLUDE_DIRS)) {
+    $excludedirs = explode(',', EXCLUDE_DIRS);
+    // Remove dir
+    foreach($excludedirs as $exdir) {
+        if(($key = array_search($exdir, $botdirs)) !== false) {
+            unset($botdirs[$key]);
+        }
+    }
+}
+
 // Remove second DEFAULT_BOT dir entry
 $botdirs = array_unique($botdirs);
+
+// Reset keys of bot dirs
+$botdirs = array_values($botdirs);
+
+// Count bot dirs
+$botdirs_count = count($botdirs);
 
 // Initialize filenames and foldertype
 $filename = '';
@@ -60,6 +103,26 @@ if (isset($update['callback_query'])) {
 
 // Message.
 } else if (isset($update['message']) && $update['message']['chat']['type'] == 'private') {
+    // Portal message?
+    if(isset($update['message']['entities']['1']['type']) && $update['message']['entities']['1']['type'] == 'text_link' && strpos($update['message']['entities']['1']['url'], 'https://intel.ingress.com/intel?ll=') === 0) {
+        // Ingressportalbot
+        $icon = iconv('UCS-4LE', 'UTF-8', pack('V', 0x1F4DC));
+        if(strpos($update['message']['text'], $icon . 'Portal:') === 0) {
+            // Make sure the bot exits and forward then
+            if(is_file(__DIR__ . '/' . INGRESSPORTALBOT . '/index.php')) {
+                include_once(__DIR__ . '/' . INGRESSPORTALBOT . '/index.php');
+                exit();
+            }
+        // PortalMapBot
+        } else if(substr_compare(strtok($update['message']['text'], PHP_EOL), '(Intel)', -strlen('(Intel)')) === 0) {
+            // Make sure the bot exits and forward then
+            if(is_file(__DIR__ . '/' . PORTALMAPBOT . '/index.php')) {
+                include_once(__DIR__ . '/' . PORTALMAPBOT . '/index.php');
+                exit();
+            }
+        }
+    }
+
     // Set foldertype to commands
     $foldertype = 'commands';
 
@@ -67,18 +130,21 @@ if (isset($update['callback_query'])) {
     if (substr($update['message']['text'], 0, 1) == '/') {
         // Get command name
         $filename = strtolower(str_replace('/', '', explode(' ', $update['message']['text'])[0]));
-
         // Check if name of a botdir is inside command
         foreach ($botdirs as $key => $dir) {
             // Filename starting with name of botdir?
-            if (substr($filename, 0, strlen($dir)) == $dir) {
+            if (substr($filename, 0, strlen($dir)) === $dir) {
                 // Set alternative filename, substract botdir name from command
                 $altfilename = substr($filename, strlen($dir));
                 // Make sure alternative filename exists inside and forward then
                 if (is_file(__DIR__ . '/' . $dir . '/' . $foldertype . '/' . $altfilename . '.php')) {
                     include_once(__DIR__ . '/' . $dir . '/index.php');
                     exit();
-                }
+                // Check if a core command was requested and forward then
+                } else if (is_file(__DIR__ . '/' . $dir . '/core/' . $foldertype . '/' . $altfilename . '.php')) {
+                    include_once(__DIR__ . '/' . $dir . '/index.php');
+                    exit();
+                } 
             }
         }
         // If filename is equal to a botdir, forward to that bot
@@ -112,10 +178,10 @@ if (isset($update['callback_query'])) {
     }
 
 // Channel post / Supergroup message.
-} else if ((isset($update['channel_post']) && $update['channel_post']['chat']['type'] == "channel") || (isset($update['message']) && $update['message']['chat']['type'] == "supergroup")) {
+} else if ((isset($update['channel_post']['text']) && $update['channel_post']['chat']['type'] == "channel") || (isset($update['message']['text']) && $update['message']['chat']['type'] == "supergroup")) {
     // Get Bot_ID 
     $bot_id = '0';
-    if(isset($update['channel_post'])) {
+    if(isset($update['channel_post']['text'])) {
         $id_pos = strrpos($update['channel_post']['text'], '-ID = ');
         $bot_id = ($id_pos === false) ? ('0') : (substr($update['channel_post']['text'], ($id_pos - 1), 1));
         $bot_id = strtoupper($bot_id);
@@ -128,25 +194,19 @@ if (isset($update['callback_query'])) {
     // Make sure bot_id was received.
     if($bot_id != '0') {
         // Search BOT_ID in config files.
-        $search = 'BOT_ID';
+        //$search = 'BOT_ID';
         // Go thru every bots' config.
         foreach ($botdirs as $key => $dir) {
             // Make sure config file exists.
-            if(is_file(__DIR__ . '/' . $dir . '/config.php')) {
-                // Read config file.
-                $lines = file(__DIR__ . '/' . $dir . '/config.php');
-                foreach($lines as $line) {
-                    // Check if the line contains the search term.
-                    if(strpos($line, $search) !== false) { 
-                        // Get BOT_ID via string manipulation.
-                        // Example: $line = define('BOT_ID','A');
-                        // explode(',', $line, 2)[1]  will split at , into 2 pieces to get you: 'A');
-                        // explode("'", INNER-EXPLODE)[1]  will split at ' and so you get the ID: A
-                        // strtoupper will make sure we compare uppercase to uppercase
-                        // substr will get only the first character as it's in the bots handled too.
-                        $config_bot_id = explode("'", explode(',', $line, 2)[1])[1];
-                        $config_bot_id = substr(strtoupper($config_bot_id), 0, 1);
-
+            if(is_file(__DIR__ . '/' . $dir . '/config/config.json')) {
+                // Read config json.
+                $str = file_get_contents(__DIR__ . '/' . $dir . '/config/config.json');
+                $config = json_decode($str, true);
+                // Get bot id.
+                // strtoupper will make sure we compare uppercase to uppercase
+                // substr will get only the first character as it's in the bots handled too.
+                $config_bot_id = $config['BOT_ID'];
+                $config_bot_id = substr(strtoupper($config_bot_id), 0, 1);
                         // Compare bot_id and config_bot_id.
                         if($bot_id === $config_bot_id) {
                             // Check if filename exists
@@ -155,8 +215,8 @@ if (isset($update['callback_query'])) {
                                 exit();
                             }
                         }
-                    }
-                }
+                    //}
+                //}
             }
         }
     }
